@@ -1,16 +1,54 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useAssessment } from '@/hooks/useAssessment';
+import AreaSelection from '@/components/AreaSelection';
+import QuestionScreen from '@/components/QuestionScreen';
+import ResultScreen from '@/components/ResultScreen';
+import ConsolidatedScreen from '@/components/ConsolidatedScreen';
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
+  const {
+    areas, selectedArea, setSelectedArea, results, screen,
+    currentQ, answers, startAssessment, selectAnswer,
+    nextQuestion, prevQuestion, addArea, renameArea,
+    redoArea, goHome, showConsolidated,
+  } = useAssessment();
+
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="assessment-wrap">
+      {screen === 'home' && (
+        <AreaSelection
+          areas={areas}
+          selectedArea={selectedArea}
+          results={results}
+          onSelect={setSelectedArea}
+          onAdd={addArea}
+          onRename={renameArea}
+          onStart={startAssessment}
+          onShowConsolidated={showConsolidated}
+        />
+      )}
+      {screen === 'questions' && (
+        <QuestionScreen
+          currentQ={currentQ}
+          answers={answers}
+          onSelect={selectAnswer}
+          onNext={nextQuestion}
+          onPrev={prevQuestion}
+        />
+      )}
+      {screen === 'result' && selectedArea && results[selectedArea] && (
+        <ResultScreen
+          areaName={selectedArea}
+          result={results[selectedArea]}
+          onHome={goHome}
+          onRedo={redoArea}
+          onConsolidated={showConsolidated}
+        />
+      )}
+      {screen === 'consolidated' && (
+        <ConsolidatedScreen results={results} onHome={goHome} />
+      )}
     </div>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;
