@@ -131,7 +131,7 @@ export function useAssessment() {
   const showConsolidated = useCallback(() => setScreen('consolidated'), []);
 
   return {
-    areas, selectedArea, setSelectedArea, results, screen,
+    areas, selectedArea, setSelectedArea, results, screen, sessionId,
     currentQ, answers, startAssessment, selectAnswer,
     nextQuestion, prevQuestion, addArea, renameArea,
     redoArea, goHome, showConsolidated, setScreen,

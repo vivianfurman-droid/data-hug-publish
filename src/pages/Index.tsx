@@ -6,7 +6,7 @@ import ConsolidatedScreen from '@/components/ConsolidatedScreen';
 
 const Index = () => {
   const {
-    areas, selectedArea, setSelectedArea, results, screen,
+    areas, selectedArea, setSelectedArea, results, screen, sessionId,
     currentQ, answers, startAssessment, selectAnswer,
     nextQuestion, prevQuestion, addArea, renameArea,
     redoArea, goHome, showConsolidated,
@@ -39,6 +39,7 @@ const Index = () => {
         <ResultScreen
           areaName={selectedArea}
           result={results[selectedArea]}
+          sessionId={sessionId}
           onHome={goHome}
           onRedo={redoArea}
           onConsolidated={showConsolidated}
