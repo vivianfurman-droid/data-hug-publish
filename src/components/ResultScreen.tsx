@@ -4,18 +4,20 @@ import {
   Chart as ChartJS, RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend
 } from 'chart.js';
 import { TOPICS, LEVELS, PRESCRIPTIONS, getLevel, type AreaResult } from '@/data/assessmentData';
+import AIActionPlan from './AIActionPlan';
 
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
 interface ResultScreenProps {
   areaName: string;
   result: AreaResult;
+  sessionId: string;
   onHome: () => void;
   onRedo: () => void;
   onConsolidated: () => void;
 }
 
-export default function ResultScreen({ areaName, result, onHome, onRedo, onConsolidated }: ResultScreenProps) {
+export default function ResultScreen({ areaName, result, sessionId, onHome, onRedo, onConsolidated }: ResultScreenProps) {
   const level = getLevel(result.total);
 
   const chartData = useMemo(() => ({
@@ -185,7 +187,10 @@ export default function ResultScreen({ areaName, result, onHome, onRedo, onConso
         })}
       </div>
 
-      <div className="flex gap-2 flex-wrap mt-2">
+      <hr className="border-t border-border my-5" />
+      <AIActionPlan areaName={areaName} sessionId={sessionId} />
+
+      <div className="flex gap-2 flex-wrap mt-5">
         <button className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90" onClick={onHome}>
           Avaliar outra área
         </button>
