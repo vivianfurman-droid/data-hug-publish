@@ -14,7 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      assessments: {
+        Row: {
+          answers: Json
+          area_name: string
+          created_at: string
+          id: string
+          scores: Json
+          session_id: string
+          total_score: number
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json
+          area_name: string
+          created_at?: string
+          id?: string
+          scores?: Json
+          session_id: string
+          total_score?: number
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          area_name?: string
+          created_at?: string
+          id?: string
+          scores?: Json
+          session_id?: string
+          total_score?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
