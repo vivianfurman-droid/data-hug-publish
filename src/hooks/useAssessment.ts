@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { TOPICS, QUESTIONS, DEFAULT_AREAS, getLevel, type AreaResult } from '@/data/assessmentData';
+import type { KPIItem, ChecklistItem } from '@/components/KPIChecklist';
 
 function getSessionId(): string {
   let id = localStorage.getItem('assessment_session_id');
@@ -11,11 +12,19 @@ function getSessionId(): string {
   return id;
 }
 
+export interface AreaExtra {
+  context: string;
+  kpis: KPIItem[];
+  checklist: ChecklistItem[];
+  actionPlanContent: string;
+}
+
 export function useAssessment() {
   const [areas, setAreas] = useState<string[]>([...DEFAULT_AREAS]);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [results, setResults] = useState<Record<string, AreaResult>>({});
-  const [screen, setScreen] = useState<'home' | 'questions' | 'result' | 'consolidated'>('home');
+  const [extras, setExtras] = useState<Record<string, AreaExtra>>({});
+  const [screen, setScreen] = useState<'home' | 'context' | 'questions' | 'result' | 'consolidated'>('home');
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const sessionId = getSessionId();
@@ -29,37 +38,85 @@ export function useAssessment() {
         .eq('session_id', sessionId);
       if (data && data.length > 0) {
         const loaded: Record<string, AreaResult> = {};
+        const loadedExtras: Record<string, AreaExtra> = {};
         const areaNames = new Set(areas);
         data.forEach((row: any) => {
           loaded[row.area_name] = {
             ts: row.scores as Record<string, number>,
             total: Number(row.total_score),
           };
+          loadedExtras[row.area_name] = {
+            context: row.area_context || '',
+            kpis: (row.kpis as KPIItem[]) || [],
+            checklist: (row.checklist as ChecklistItem[]) || [],
+            actionPlanContent: row.action_plan_content || '',
+          };
           areaNames.add(row.area_name);
         });
         setResults(loaded);
+        setExtras(loadedExtras);
         setAreas(Array.from(areaNames));
       }
     };
     load();
   }, [sessionId]);
 
-  const saveResult = useCallback(async (areaName: string, result: AreaResult, ans: Record<number, number>) => {
+  const saveResult = useCallback(async (areaName: string, result: AreaResult, ans: Record<number, number>, extra?: Partial<AreaExtra>) => {
+    const currentExtra = extras[areaName] || { context: '', kpis: [], checklist: [], actionPlanContent: '' };
+    const merged = { ...currentExtra, ...extra };
+    
     await supabase.from('assessments').upsert({
       session_id: sessionId,
       area_name: areaName,
       answers: ans,
       scores: result.ts,
       total_score: Number(result.total.toFixed(1)),
+      area_context: merged.context,
+      kpis: merged.kpis as any,
+      checklist: merged.checklist as any,
+      action_plan_content: merged.actionPlanContent,
     }, { onConflict: 'session_id,area_name' });
-  }, [sessionId]);
+  }, [sessionId, extras]);
 
-  const startAssessment = useCallback(() => {
+  const saveExtras = useCallback(async (areaName: string, extra: Partial<AreaExtra>) => {
+    setExtras(prev => ({
+      ...prev,
+      [areaName]: { ...(prev[areaName] || { context: '', kpis: [], checklist: [], actionPlanContent: '' }), ...extra },
+    }));
+
+    const result = results[areaName];
+    if (result) {
+      const currentExtra = extras[areaName] || { context: '', kpis: [], checklist: [], actionPlanContent: '' };
+      const merged = { ...currentExtra, ...extra };
+      await supabase.from('assessments').upsert({
+        session_id: sessionId,
+        area_name: areaName,
+        answers: {} as any,
+        scores: result.ts,
+        total_score: Number(result.total.toFixed(1)),
+        area_context: merged.context,
+        kpis: merged.kpis as any,
+        checklist: merged.checklist as any,
+        action_plan_content: merged.actionPlanContent,
+      }, { onConflict: 'session_id,area_name' });
+    }
+  }, [sessionId, results, extras]);
+
+  const startContext = useCallback(() => {
     if (!selectedArea) return false;
+    setScreen('context');
+    return true;
+  }, [selectedArea]);
+
+  const continueFromContext = useCallback((context: string) => {
+    if (!selectedArea) return;
+    setExtras(prev => ({
+      ...prev,
+      [selectedArea]: { ...(prev[selectedArea] || { context: '', kpis: [], checklist: [], actionPlanContent: '' }), context },
+    }));
     setCurrentQ(0);
     setAnswers({});
     setScreen('questions');
-    return true;
   }, [selectedArea]);
 
   const selectAnswer = useCallback((questionIndex: number, value: number) => {
@@ -71,7 +128,6 @@ export function useAssessment() {
     if (currentQ < QUESTIONS.length - 1) {
       setCurrentQ(prev => prev + 1);
     } else {
-      // Calculate result
       const byT: Record<string, { s: number; n: number }> = {};
       TOPICS.forEach(t => { byT[t.id] = { s: 0, n: 0 }; });
       QUESTIONS.forEach((q, i) => {
@@ -86,10 +142,11 @@ export function useAssessment() {
       const result: AreaResult = { ts, total };
       
       setResults(prev => ({ ...prev, [selectedArea!]: result }));
-      saveResult(selectedArea!, result, answers);
+      const extra = extras[selectedArea!];
+      saveResult(selectedArea!, result, answers, extra);
       setScreen('result');
     }
-  }, [currentQ, answers, selectedArea, saveResult]);
+  }, [currentQ, answers, selectedArea, saveResult, extras]);
 
   const prevQuestion = useCallback(() => {
     if (currentQ > 0) setCurrentQ(prev => prev - 1);
@@ -111,8 +168,15 @@ export function useAssessment() {
         return next;
       });
     }
+    if (extras[oldName]) {
+      setExtras(prev => {
+        const next = { ...prev, [newName]: prev[oldName] };
+        delete next[oldName];
+        return next;
+      });
+    }
     if (selectedArea === oldName) setSelectedArea(newName);
-  }, [results, selectedArea]);
+  }, [results, extras, selectedArea]);
 
   const redoArea = useCallback(async () => {
     if (!selectedArea) return;
@@ -122,18 +186,16 @@ export function useAssessment() {
       return next;
     });
     await supabase.from('assessments').delete().eq('session_id', sessionId).eq('area_name', selectedArea);
-    setCurrentQ(0);
-    setAnswers({});
-    setScreen('questions');
+    setScreen('context');
   }, [selectedArea, sessionId]);
 
   const goHome = useCallback(() => setScreen('home'), []);
   const showConsolidated = useCallback(() => setScreen('consolidated'), []);
 
   return {
-    areas, selectedArea, setSelectedArea, results, screen, sessionId,
-    currentQ, answers, startAssessment, selectAnswer,
+    areas, selectedArea, setSelectedArea, results, extras, screen, sessionId,
+    currentQ, answers, startContext, continueFromContext, selectAnswer,
     nextQuestion, prevQuestion, addArea, renameArea,
-    redoArea, goHome, showConsolidated, setScreen,
+    redoArea, goHome, showConsolidated, setScreen, saveExtras,
   };
 }

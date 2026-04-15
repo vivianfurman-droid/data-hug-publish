@@ -37,6 +37,7 @@ serve(async (req) => {
 
     const scores = assessment.scores as Record<string, number>;
     const totalScore = assessment.total_score;
+    const areaContext = assessment.area_context || '';
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -88,6 +89,7 @@ Seja ESPECÍFICO para a área de negócio indicada. Não seja genérico. Dê exe
 
     const userPrompt = `Analise os resultados do diagnóstico de maturidade de dados da área "${area_name}":
 
+${areaContext ? `**Contexto da área:** ${areaContext}\n` : ''}
 Pontuação total: ${totalScore}/5.0
 
 Pontuação por domínio:
@@ -98,7 +100,7 @@ Pontuação por domínio:
 - Analytics & Business Intelligence (rel): ${scores.rel?.toFixed(1) || "N/A"}
 - AI/ML & Automação Inteligente (ia): ${scores.ia?.toFixed(1) || "N/A"}
 
-Gere um plano de ação detalhado e personalizado para a área de ${area_name}.`;
+Gere um plano de ação detalhado e personalizado para a área de ${area_name}.${areaContext ? ` Considere o contexto descrito acima para tornar as recomendações mais específicas e relevantes.` : ''}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

@@ -16,30 +16,42 @@ export type Database = {
     Tables: {
       assessments: {
         Row: {
+          action_plan_content: string | null
           answers: Json
+          area_context: string | null
           area_name: string
+          checklist: Json | null
           created_at: string
           id: string
+          kpis: Json | null
           scores: Json
           session_id: string
           total_score: number
           updated_at: string
         }
         Insert: {
+          action_plan_content?: string | null
           answers?: Json
+          area_context?: string | null
           area_name: string
+          checklist?: Json | null
           created_at?: string
           id?: string
+          kpis?: Json | null
           scores?: Json
           session_id: string
           total_score?: number
           updated_at?: string
         }
         Update: {
+          action_plan_content?: string | null
           answers?: Json
+          area_context?: string | null
           area_name?: string
+          checklist?: Json | null
           created_at?: string
           id?: string
+          kpis?: Json | null
           scores?: Json
           session_id?: string
           total_score?: number
