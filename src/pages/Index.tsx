@@ -1,15 +1,16 @@
 import { useAssessment } from '@/hooks/useAssessment';
 import AreaSelection from '@/components/AreaSelection';
+import ContextScreen from '@/components/ContextScreen';
 import QuestionScreen from '@/components/QuestionScreen';
 import ResultScreen from '@/components/ResultScreen';
 import ConsolidatedScreen from '@/components/ConsolidatedScreen';
 
 const Index = () => {
   const {
-    areas, selectedArea, setSelectedArea, results, screen, sessionId,
-    currentQ, answers, startAssessment, selectAnswer,
+    areas, selectedArea, setSelectedArea, results, extras, screen, sessionId,
+    currentQ, answers, startContext, continueFromContext, selectAnswer,
     nextQuestion, prevQuestion, addArea, renameArea,
-    redoArea, goHome, showConsolidated,
+    redoArea, goHome, showConsolidated, saveExtras,
   } = useAssessment();
 
   return (
@@ -22,8 +23,16 @@ const Index = () => {
           onSelect={setSelectedArea}
           onAdd={addArea}
           onRename={renameArea}
-          onStart={startAssessment}
+          onStart={startContext}
           onShowConsolidated={showConsolidated}
+        />
+      )}
+      {screen === 'context' && selectedArea && (
+        <ContextScreen
+          areaName={selectedArea}
+          initialContext={extras[selectedArea]?.context || ''}
+          onContinue={continueFromContext}
+          onBack={goHome}
         />
       )}
       {screen === 'questions' && (
@@ -39,10 +48,12 @@ const Index = () => {
         <ResultScreen
           areaName={selectedArea}
           result={results[selectedArea]}
+          extras={extras[selectedArea] || { context: '', kpis: [], checklist: [], actionPlanContent: '' }}
           sessionId={sessionId}
           onHome={goHome}
           onRedo={redoArea}
           onConsolidated={showConsolidated}
+          onSaveExtras={(extra) => saveExtras(selectedArea, extra)}
         />
       )}
       {screen === 'consolidated' && (
