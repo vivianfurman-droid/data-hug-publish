@@ -1,23 +1,27 @@
 import { useState, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Sparkles, Loader2, AlertCircle } from 'lucide-react';
+import { Sparkles, Loader2, AlertCircle, Save, CheckCircle } from 'lucide-react';
 
 interface AIActionPlanProps {
   areaName: string;
   sessionId: string;
+  savedContent: string;
+  onSave: (content: string) => void;
 }
 
-export default function AIActionPlan({ areaName, sessionId }: AIActionPlanProps) {
-  const [content, setContent] = useState('');
+export default function AIActionPlan({ areaName, sessionId, savedContent, onSave }: AIActionPlanProps) {
+  const [content, setContent] = useState(savedContent);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasGenerated, setHasGenerated] = useState(false);
+  const [hasGenerated, setHasGenerated] = useState(!!savedContent);
+  const [saved, setSaved] = useState(!!savedContent);
 
   const generate = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     setContent('');
     setHasGenerated(true);
+    setSaved(false);
 
     try {
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-action-plan`;
@@ -71,12 +75,23 @@ export default function AIActionPlan({ areaName, sessionId }: AIActionPlanProps)
           }
         }
       }
+
+      // Auto-save after generation
+      if (accumulated) {
+        onSave(accumulated);
+        setSaved(true);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erro desconhecido');
     } finally {
       setIsLoading(false);
     }
-  }, [areaName, sessionId]);
+  }, [areaName, sessionId, onSave]);
+
+  const handleSave = () => {
+    onSave(content);
+    setSaved(true);
+  };
 
   if (!hasGenerated) {
     return (
@@ -95,11 +110,28 @@ export default function AIActionPlan({ areaName, sessionId }: AIActionPlanProps)
       <div className="flex items-center gap-2 mb-3">
         <Sparkles className="w-4 h-4 text-purple-600" />
         <h3 className="text-sm font-medium">Plano de Ação gerado por IA</h3>
-        {!isLoading && content && (
-          <button onClick={generate} className="ml-auto text-xs text-muted-foreground hover:text-foreground">
-            Regenerar
-          </button>
-        )}
+        <div className="ml-auto flex items-center gap-2">
+          {saved && !isLoading && (
+            <span className="flex items-center gap-1 text-xs text-green-600">
+              <CheckCircle className="w-3 h-3" />
+              Salvo
+            </span>
+          )}
+          {!isLoading && content && !saved && (
+            <button
+              onClick={handleSave}
+              className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 font-medium"
+            >
+              <Save className="w-3 h-3" />
+              Salvar
+            </button>
+          )}
+          {!isLoading && content && (
+            <button onClick={generate} className="text-xs text-muted-foreground hover:text-foreground">
+              Regenerar
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (
