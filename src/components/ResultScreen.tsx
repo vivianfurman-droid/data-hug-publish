@@ -5,10 +5,7 @@ import {
 } from 'chart.js';
 import { TOPICS, LEVELS, PRESCRIPTIONS, getLevel, type AreaResult } from '@/data/assessmentData';
 import AIActionPlan from './AIActionPlan';
-import KPIChecklist from './KPIChecklist';
 import type { AreaExtra } from '@/hooks/useAssessment';
-import type { KPIItem, ChecklistItem } from './KPIChecklist';
-import { Save, CheckCircle } from 'lucide-react';
 
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
@@ -25,32 +22,6 @@ interface ResultScreenProps {
 
 export default function ResultScreen({ areaName, result, extras, sessionId, onHome, onRedo, onConsolidated, onSaveExtras }: ResultScreenProps) {
   const level = getLevel(result.total);
-  const [kpis, setKpis] = useState<KPIItem[]>(extras.kpis || []);
-  const [checklist, setChecklist] = useState<ChecklistItem[]>(extras.checklist || []);
-  const [dirty, setDirty] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [justSaved, setJustSaved] = useState(false);
-
-  const handleKPIsChange = (newKpis: KPIItem[]) => {
-    setKpis(newKpis);
-    setDirty(true);
-    setJustSaved(false);
-  };
-
-  const handleChecklistChange = (newChecklist: ChecklistItem[]) => {
-    setChecklist(newChecklist);
-    setDirty(true);
-    setJustSaved(false);
-  };
-
-  const handleSaveAll = async () => {
-    setSaving(true);
-    await onSaveExtras({ kpis, checklist });
-    setSaving(false);
-    setDirty(false);
-    setJustSaved(true);
-    setTimeout(() => setJustSaved(false), 3000);
-  };
 
   const handleSaveActionPlan = (content: string) => {
     onSaveExtras({ actionPlanContent: content });
