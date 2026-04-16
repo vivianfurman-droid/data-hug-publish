@@ -14,6 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
+      area_checklist_items: {
+        Row: {
+          ai_generated: boolean
+          area_name: string
+          completed: boolean
+          created_at: string
+          id: string
+          priority: string | null
+          session_id: string
+          sort_order: number | null
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          ai_generated?: boolean
+          area_name: string
+          completed?: boolean
+          created_at?: string
+          id?: string
+          priority?: string | null
+          session_id: string
+          sort_order?: number | null
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          ai_generated?: boolean
+          area_name?: string
+          completed?: boolean
+          created_at?: string
+          id?: string
+          priority?: string | null
+          session_id?: string
+          sort_order?: number | null
+          text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      area_kpis: {
+        Row: {
+          area_name: string
+          created_at: string
+          current_value: string | null
+          id: string
+          name: string
+          parent_id: string | null
+          session_id: string
+          sort_order: number | null
+          target_value: string | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          area_name: string
+          created_at?: string
+          current_value?: string | null
+          id?: string
+          name: string
+          parent_id?: string | null
+          session_id: string
+          sort_order?: number | null
+          target_value?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area_name?: string
+          created_at?: string
+          current_value?: string | null
+          id?: string
+          name?: string
+          parent_id?: string | null
+          session_id?: string
+          sort_order?: number | null
+          target_value?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "area_kpis_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "area_kpis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessments: {
         Row: {
           action_plan_content: string | null

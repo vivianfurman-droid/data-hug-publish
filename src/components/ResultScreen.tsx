@@ -1,14 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Radar } from 'react-chartjs-2';
 import {
   Chart as ChartJS, RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend
 } from 'chart.js';
 import { TOPICS, LEVELS, PRESCRIPTIONS, getLevel, type AreaResult } from '@/data/assessmentData';
 import AIActionPlan from './AIActionPlan';
-import KPIChecklist from './KPIChecklist';
 import type { AreaExtra } from '@/hooks/useAssessment';
-import type { KPIItem, ChecklistItem } from './KPIChecklist';
-import { Save, CheckCircle } from 'lucide-react';
 
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
@@ -25,32 +22,6 @@ interface ResultScreenProps {
 
 export default function ResultScreen({ areaName, result, extras, sessionId, onHome, onRedo, onConsolidated, onSaveExtras }: ResultScreenProps) {
   const level = getLevel(result.total);
-  const [kpis, setKpis] = useState<KPIItem[]>(extras.kpis || []);
-  const [checklist, setChecklist] = useState<ChecklistItem[]>(extras.checklist || []);
-  const [dirty, setDirty] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [justSaved, setJustSaved] = useState(false);
-
-  const handleKPIsChange = (newKpis: KPIItem[]) => {
-    setKpis(newKpis);
-    setDirty(true);
-    setJustSaved(false);
-  };
-
-  const handleChecklistChange = (newChecklist: ChecklistItem[]) => {
-    setChecklist(newChecklist);
-    setDirty(true);
-    setJustSaved(false);
-  };
-
-  const handleSaveAll = async () => {
-    setSaving(true);
-    await onSaveExtras({ kpis, checklist });
-    setSaving(false);
-    setDirty(false);
-    setJustSaved(true);
-    setTimeout(() => setJustSaved(false), 3000);
-  };
 
   const handleSaveActionPlan = (content: string) => {
     onSaveExtras({ actionPlanContent: content });
@@ -89,32 +60,9 @@ export default function ResultScreen({ areaName, result, extras, sessionId, onHo
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4">
         <button className="px-4 py-2 text-sm border rounded-lg bg-background font-medium hover:bg-muted" onClick={onHome}>
           ← Início
-        </button>
-        <button
-          onClick={handleSaveAll}
-          disabled={saving}
-          className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg font-medium transition-all ${
-            justSaved
-              ? 'bg-green-100 text-green-700 border border-green-300'
-              : dirty
-                ? 'bg-primary text-primary-foreground hover:opacity-90 shadow-sm'
-                : 'border bg-background text-muted-foreground hover:bg-muted'
-          }`}
-        >
-          {justSaved ? (
-            <>
-              <CheckCircle className="w-4 h-4" />
-              Salvo!
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4" />
-              {saving ? 'Salvando...' : dirty ? 'Salvar alterações' : 'Salvar'}
-            </>
-          )}
         </button>
       </div>
 
@@ -265,29 +213,7 @@ export default function ResultScreen({ areaName, result, extras, sessionId, onHo
         onSave={handleSaveActionPlan}
       />
 
-      <hr className="border-t border-border my-5" />
 
-      {/* KPIs & Checklist */}
-      <KPIChecklist
-        kpis={kpis}
-        checklist={checklist}
-        onKPIsChange={handleKPIsChange}
-        onChecklistChange={handleChecklistChange}
-      />
-
-      {/* Floating save bar when dirty */}
-      {dirty && (
-        <div className="sticky bottom-4 mt-6 flex justify-center">
-          <button
-            onClick={handleSaveAll}
-            disabled={saving}
-            className="flex items-center gap-2 px-6 py-3 text-sm rounded-xl bg-primary text-primary-foreground font-medium shadow-lg hover:opacity-90 transition-opacity"
-          >
-            <Save className="w-4 h-4" />
-            {saving ? 'Salvando...' : 'Salvar todas as alterações'}
-          </button>
-        </div>
-      )}
 
       <div className="flex gap-2 flex-wrap mt-5">
         <button className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90" onClick={onHome}>

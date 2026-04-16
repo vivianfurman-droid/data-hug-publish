@@ -9,10 +9,11 @@ interface AreaSelectionProps {
   onRename: (oldName: string, newName: string) => void;
   onStart: () => boolean;
   onShowConsolidated: () => void;
+  onBackToMain?: () => void;
 }
 
 export default function AreaSelection({
-  areas, selectedArea, results, onSelect, onAdd, onRename, onStart, onShowConsolidated
+  areas, selectedArea, results, onSelect, onAdd, onRename, onStart, onShowConsolidated, onBackToMain
 }: AreaSelectionProps) {
   const [editIdx, setEditIdx] = useState(-1);
   const [editValue, setEditValue] = useState('');
@@ -34,7 +35,12 @@ export default function AreaSelection({
 
   return (
     <div>
-      <h1 className="text-lg font-medium mb-1">Maturidade de dados</h1>
+      {onBackToMain && (
+        <button onClick={onBackToMain} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4">
+          ← Voltar
+        </button>
+      )}
+      <h1 className="text-lg font-medium mb-1">Diagnóstico de Maturidade</h1>
       <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
         Selecione a área para avaliar. Duplo clique para editar o nome.
       </p>
