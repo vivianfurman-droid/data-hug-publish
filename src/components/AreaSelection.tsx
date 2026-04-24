@@ -42,8 +42,11 @@ export default function AreaSelection({
         </button>
       )}
       <h1 className="text-lg font-medium mb-1">Diagnóstico de Maturidade</h1>
-      <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+      <p className="text-sm text-muted-foreground mb-1 leading-relaxed">
         Selecione a área para avaliar. Duplo clique para editar o nome.
+      </p>
+      <p className="text-xs text-muted-foreground/70 mb-5">
+        💾 Alterações são salvas automaticamente e refletem na Gestão de KPIs.
       </p>
       
       <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2 mb-4">
