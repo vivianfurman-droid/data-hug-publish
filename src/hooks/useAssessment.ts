@@ -29,34 +29,48 @@ export function useAssessment() {
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const sessionId = getSessionId();
 
-  // Load saved results from DB
+  // Load saved areas + results from DB
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
-        .from('assessments')
-        .select('*')
-        .eq('session_id', sessionId);
-      if (data && data.length > 0) {
-        const loaded: Record<string, AreaResult> = {};
-        const loadedExtras: Record<string, AreaExtra> = {};
-        const areaNames = new Set(areas);
-        data.forEach((row: any) => {
-          loaded[row.area_name] = {
-            ts: row.scores as Record<string, number>,
-            total: Number(row.total_score),
-          };
-          loadedExtras[row.area_name] = {
-            context: row.area_context || '',
-            kpis: (row.kpis as KPIItem[]) || [],
-            checklist: (row.checklist as ChecklistItem[]) || [],
-            actionPlanContent: row.action_plan_content || '',
-          };
-          areaNames.add(row.area_name);
-        });
-        setResults(loaded);
-        setExtras(loadedExtras);
-        setAreas(Array.from(areaNames));
+      const [assessRes, areasRes] = await Promise.all([
+        supabase.from('assessments').select('*').eq('session_id', sessionId),
+        supabase.from('session_areas').select('*').eq('session_id', sessionId).order('sort_order'),
+      ]);
+
+      const loaded: Record<string, AreaResult> = {};
+      const loadedExtras: Record<string, AreaExtra> = {};
+      const areaSet = new Set<string>();
+
+      // First add saved areas (in order)
+      const savedAreas = areasRes.data || [];
+      if (savedAreas.length > 0) {
+        savedAreas.forEach((row: any) => areaSet.add(row.area_name));
+      } else {
+        // First time: seed with defaults
+        DEFAULT_AREAS.forEach(a => areaSet.add(a));
+        const seed = DEFAULT_AREAS.map((name, i) => ({
+          session_id: sessionId, area_name: name, sort_order: i,
+        }));
+        await supabase.from('session_areas').insert(seed);
       }
+
+      (assessRes.data || []).forEach((row: any) => {
+        loaded[row.area_name] = {
+          ts: row.scores as Record<string, number>,
+          total: Number(row.total_score),
+        };
+        loadedExtras[row.area_name] = {
+          context: row.area_context || '',
+          kpis: (row.kpis as KPIItem[]) || [],
+          checklist: (row.checklist as ChecklistItem[]) || [],
+          actionPlanContent: row.action_plan_content || '',
+        };
+        areaSet.add(row.area_name);
+      });
+
+      setResults(loaded);
+      setExtras(loadedExtras);
+      setAreas(Array.from(areaSet));
     };
     load();
   }, [sessionId]);
@@ -152,14 +166,19 @@ export function useAssessment() {
     if (currentQ > 0) setCurrentQ(prev => prev - 1);
   }, [currentQ]);
 
-  const addArea = useCallback((name: string) => {
-    if (!areas.includes(name)) {
-      setAreas(prev => [...prev, name]);
-      setSelectedArea(name);
-    }
-  }, [areas]);
+  const addArea = useCallback(async (name: string) => {
+    if (areas.includes(name)) return;
+    setAreas(prev => [...prev, name]);
+    setSelectedArea(name);
+    await supabase.from('session_areas').insert({
+      session_id: sessionId,
+      area_name: name,
+      sort_order: areas.length,
+    });
+  }, [areas, sessionId]);
 
-  const renameArea = useCallback((oldName: string, newName: string) => {
+  const renameArea = useCallback(async (oldName: string, newName: string) => {
+    if (oldName === newName || areas.includes(newName)) return;
     setAreas(prev => prev.map(a => a === oldName ? newName : a));
     if (results[oldName]) {
       setResults(prev => {
@@ -176,7 +195,29 @@ export function useAssessment() {
       });
     }
     if (selectedArea === oldName) setSelectedArea(newName);
-  }, [results, extras, selectedArea]);
+
+    // Cascade rename in DB across all related tables
+    await Promise.all([
+      supabase.from('session_areas').update({ area_name: newName }).eq('session_id', sessionId).eq('area_name', oldName),
+      supabase.from('assessments').update({ area_name: newName }).eq('session_id', sessionId).eq('area_name', oldName),
+      supabase.from('area_kpis').update({ area_name: newName }).eq('session_id', sessionId).eq('area_name', oldName),
+      supabase.from('area_checklist_items').update({ area_name: newName }).eq('session_id', sessionId).eq('area_name', oldName),
+    ]);
+  }, [areas, results, extras, selectedArea, sessionId]);
+
+  const deleteArea = useCallback(async (name: string) => {
+    setAreas(prev => prev.filter(a => a !== name));
+    setResults(prev => { const n = { ...prev }; delete n[name]; return n; });
+    setExtras(prev => { const n = { ...prev }; delete n[name]; return n; });
+    if (selectedArea === name) setSelectedArea(null);
+
+    await Promise.all([
+      supabase.from('session_areas').delete().eq('session_id', sessionId).eq('area_name', name),
+      supabase.from('assessments').delete().eq('session_id', sessionId).eq('area_name', name),
+      supabase.from('area_kpis').delete().eq('session_id', sessionId).eq('area_name', name),
+      supabase.from('area_checklist_items').delete().eq('session_id', sessionId).eq('area_name', name),
+    ]);
+  }, [selectedArea, sessionId]);
 
   const redoArea = useCallback(async () => {
     if (!selectedArea) return;
@@ -195,7 +236,7 @@ export function useAssessment() {
   return {
     areas, selectedArea, setSelectedArea, results, extras, screen, sessionId,
     currentQ, answers, startContext, continueFromContext, selectAnswer,
-    nextQuestion, prevQuestion, addArea, renameArea,
+    nextQuestion, prevQuestion, addArea, renameArea, deleteArea,
     redoArea, goHome, showConsolidated, setScreen, saveExtras,
   };
 }
