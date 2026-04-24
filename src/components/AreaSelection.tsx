@@ -80,19 +80,32 @@ export default function AreaSelection({
               </div>
             </div>
           ) : (
-            <button
-              key={area}
-              className={`area-btn ${selectedArea === area ? 'selected' : ''}`}
-              onClick={() => { onSelect(area); setWarning(false); }}
-              onDoubleClick={e => { e.stopPropagation(); setEditIdx(i); setEditValue(area); }}
-            >
-              {results[area] && <span className="text-green-600">✓ </span>}
-              {area}
-              {results[area] && (
-                <span className="text-xs text-muted-foreground ml-1">{results[area].total.toFixed(1)}</span>
-              )}
-              <span className="block text-[10px] text-muted-foreground/60 mt-0.5">duplo clique p/ editar</span>
-            </button>
+            <div key={area} className="relative group">
+              <button
+                className={`area-btn w-full ${selectedArea === area ? 'selected' : ''}`}
+                onClick={() => { onSelect(area); setWarning(false); }}
+                onDoubleClick={e => { e.stopPropagation(); setEditIdx(i); setEditValue(area); }}
+              >
+                {results[area] && <span className="text-green-600">✓ </span>}
+                {area}
+                {results[area] && (
+                  <span className="text-xs text-muted-foreground ml-1">{results[area].total.toFixed(1)}</span>
+                )}
+                <span className="block text-[10px] text-muted-foreground/60 mt-0.5">duplo clique p/ editar</span>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (confirm(`Excluir "${area}"? Isso removerá a avaliação, KPIs e checklist desta área.`)) {
+                    onDelete(area);
+                  }
+                }}
+                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-background border text-destructive opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs hover:bg-destructive hover:text-destructive-foreground"
+                title="Excluir área"
+              >
+                ×
+              </button>
+            </div>
           )
         ))}
       </div>
