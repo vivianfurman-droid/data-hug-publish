@@ -59,6 +59,7 @@ const Index = () => {
           onSelect={setSelectedArea}
           onAdd={addArea}
           onRename={renameArea}
+          onDelete={deleteArea}
           onStart={startContext}
           onShowConsolidated={showConsolidated}
           onBackToMain={handleBackToMain}
