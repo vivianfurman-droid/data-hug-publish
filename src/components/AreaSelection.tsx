@@ -7,13 +7,14 @@ interface AreaSelectionProps {
   onSelect: (area: string) => void;
   onAdd: (name: string) => void;
   onRename: (oldName: string, newName: string) => void;
+  onDelete: (name: string) => void;
   onStart: () => boolean;
   onShowConsolidated: () => void;
   onBackToMain?: () => void;
 }
 
 export default function AreaSelection({
-  areas, selectedArea, results, onSelect, onAdd, onRename, onStart, onShowConsolidated, onBackToMain
+  areas, selectedArea, results, onSelect, onAdd, onRename, onDelete, onStart, onShowConsolidated, onBackToMain
 }: AreaSelectionProps) {
   const [editIdx, setEditIdx] = useState(-1);
   const [editValue, setEditValue] = useState('');
