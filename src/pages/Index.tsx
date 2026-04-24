@@ -13,7 +13,7 @@ const Index = () => {
   const {
     areas, selectedArea, setSelectedArea, results, extras, screen, sessionId,
     currentQ, answers, startContext, continueFromContext, selectAnswer,
-    nextQuestion, prevQuestion, addArea, renameArea,
+    nextQuestion, prevQuestion, addArea, renameArea, deleteArea,
     redoArea, goHome, showConsolidated, saveExtras,
   } = useAssessment();
 
@@ -59,6 +59,7 @@ const Index = () => {
           onSelect={setSelectedArea}
           onAdd={addArea}
           onRename={renameArea}
+          onDelete={deleteArea}
           onStart={startContext}
           onShowConsolidated={showConsolidated}
           onBackToMain={handleBackToMain}

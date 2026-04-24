@@ -7,13 +7,14 @@ interface AreaSelectionProps {
   onSelect: (area: string) => void;
   onAdd: (name: string) => void;
   onRename: (oldName: string, newName: string) => void;
+  onDelete: (name: string) => void;
   onStart: () => boolean;
   onShowConsolidated: () => void;
   onBackToMain?: () => void;
 }
 
 export default function AreaSelection({
-  areas, selectedArea, results, onSelect, onAdd, onRename, onStart, onShowConsolidated, onBackToMain
+  areas, selectedArea, results, onSelect, onAdd, onRename, onDelete, onStart, onShowConsolidated, onBackToMain
 }: AreaSelectionProps) {
   const [editIdx, setEditIdx] = useState(-1);
   const [editValue, setEditValue] = useState('');
@@ -41,8 +42,11 @@ export default function AreaSelection({
         </button>
       )}
       <h1 className="text-lg font-medium mb-1">Diagnóstico de Maturidade</h1>
-      <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+      <p className="text-sm text-muted-foreground mb-1 leading-relaxed">
         Selecione a área para avaliar. Duplo clique para editar o nome.
+      </p>
+      <p className="text-xs text-muted-foreground/70 mb-5">
+        💾 Alterações são salvas automaticamente e refletem na Gestão de KPIs.
       </p>
       
       <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2 mb-4">
@@ -76,19 +80,32 @@ export default function AreaSelection({
               </div>
             </div>
           ) : (
-            <button
-              key={area}
-              className={`area-btn ${selectedArea === area ? 'selected' : ''}`}
-              onClick={() => { onSelect(area); setWarning(false); }}
-              onDoubleClick={e => { e.stopPropagation(); setEditIdx(i); setEditValue(area); }}
-            >
-              {results[area] && <span className="text-green-600">✓ </span>}
-              {area}
-              {results[area] && (
-                <span className="text-xs text-muted-foreground ml-1">{results[area].total.toFixed(1)}</span>
-              )}
-              <span className="block text-[10px] text-muted-foreground/60 mt-0.5">duplo clique p/ editar</span>
-            </button>
+            <div key={area} className="relative group">
+              <button
+                className={`area-btn w-full ${selectedArea === area ? 'selected' : ''}`}
+                onClick={() => { onSelect(area); setWarning(false); }}
+                onDoubleClick={e => { e.stopPropagation(); setEditIdx(i); setEditValue(area); }}
+              >
+                {results[area] && <span className="text-green-600">✓ </span>}
+                {area}
+                {results[area] && (
+                  <span className="text-xs text-muted-foreground ml-1">{results[area].total.toFixed(1)}</span>
+                )}
+                <span className="block text-[10px] text-muted-foreground/60 mt-0.5">duplo clique p/ editar</span>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (confirm(`Excluir "${area}"? Isso removerá a avaliação, KPIs e checklist desta área.`)) {
+                    onDelete(area);
+                  }
+                }}
+                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-background border text-destructive opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs hover:bg-destructive hover:text-destructive-foreground"
+                title="Excluir área"
+              >
+                ×
+              </button>
+            </div>
           )
         ))}
       </div>
