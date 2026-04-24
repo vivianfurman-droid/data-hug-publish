@@ -148,6 +148,33 @@ export type Database = {
         }
         Relationships: []
       }
+      session_areas: {
+        Row: {
+          area_name: string
+          created_at: string
+          id: string
+          session_id: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          area_name: string
+          created_at?: string
+          id?: string
+          session_id: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          area_name?: string
+          created_at?: string
+          id?: string
+          session_id?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
